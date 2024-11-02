@@ -1,0 +1,5 @@
+# Ignore env.json for sensitive data
+env.json
+
+# Ignore node_modules folder
+node_modules/
