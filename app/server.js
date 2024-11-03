@@ -15,28 +15,9 @@ const apiUrl = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
 const portfolio = [];
 
 app.use(express.json());
-app.use(express.static(path.join('public')));
-
-//Simple function to see if you have connected to the API or not.
-app.get('/api/status', async (req, res) => {
-    try {
-        let response = await axios.get(`${apiUrl}AAPL&apikey=${apiKey}`);
-        
-        if (response.data && response.data['Global Quote']) {
-            res.json({ status: 'connected' }).status(200).send();
-        } else {
-            res.json({ status: 'disconnected' }).status(400).send();
-        }
-    } catch (error){
-        res.json({ status: 'disconnected' }).status(500).send();
-    }
-});
-
-app.use(express.json());
-app.use(express.static(path.join('public')));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 
-
 //Simple function to see if you have connected to the API or not.
 app.get('/api/status', async (req, res) => {
     try {
@@ -51,6 +32,9 @@ app.get('/api/status', async (req, res) => {
         res.json({ status: 'disconnected' }).status(500).send();
     }
 });
+
+
+
 
 app.post("/signup", async (req, res) => {
   const { username, password } = req.body;
