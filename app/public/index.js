@@ -27,7 +27,7 @@ let statusElement = document.getElementById('api-status');
             window.location.href = 'login.html';
         });
 
-        document.getElementById("loginButton").addEventListener("click", function() {
+        document.getElementById("investButton").addEventListener("click", function() {
             window.location.href = 'invest.html';
         });
 
