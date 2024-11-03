@@ -4,8 +4,12 @@ This is the github repo for the cs375 project
 To get the project up and running
 go into the route directroy and run 
 npm install
-
 To create your database and table, run the command psql --username USERNAME -f setup.sql, replacing your use name with your postgres user.
+
+
+YOU MAY HAVE TO RUN:
+npm install function-bind
+It has been popping up a quarter of the time during testing.
 
 ALSO create an env.json file in the root directory that has
 
