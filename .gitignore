@@ -2,4 +2,6 @@
 env.json
 
 # Ignore node_modules folder
-#node_modules/
+node_modules/
+
+package-lock.json
