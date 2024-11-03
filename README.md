@@ -18,3 +18,5 @@ ALSO create an env.json file in the root directory that has
 
 you should than be able to go the the /app directory
 and run node.js
+OR 
+in the root directory run npm start
