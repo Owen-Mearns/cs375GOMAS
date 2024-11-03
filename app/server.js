@@ -23,17 +23,16 @@ app.get('/api/status', async (req, res) => {
     try {
         let response = await axios.get(`${apiUrl}AAPL&apikey=${apiKey}`);
         
+        //Global quote is one of the things you recieve no matter what, so if you dont get this, the API is not connected.
         if (response.data && response.data['Global Quote']) {
-            res.json({ status: 'connected' }).status(200).send();
+            res.status(200).json({ status: 'connected' });
         } else {
-            res.json({ status: 'disconnected' }).status(400).send();
+            res.status(400).json({ status: 'disconnected' });
         }
-    } catch (error){
-        res.json({ status: 'disconnected' }).status(500).send();
+    } catch (error) {
+        res.status(500).json({ status: 'disconnected' });
     }
 });
-
-
 
 
 app.post("/signup", async (req, res) => {
