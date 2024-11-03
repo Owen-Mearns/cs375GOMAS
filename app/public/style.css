@@ -23,3 +23,86 @@ th, td {
 #message {
 	margin: 1rem 0;
 }
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f8ff; /* Light background color */
+    color: #333;
+}
+
+.container {
+    max-width: 600px;  /* Centered container */
+    margin: 20px auto; /* Center horizontally */
+    padding: 20px;
+    background: #ffffff; /* White background */
+    border-radius: 8px;  /* Rounded corners */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+h1 {
+    text-align: center;  /* Centered heading */
+    color: #2c3e50; /* Darker heading color */
+}
+
+.form-group {
+    margin-bottom: 15px; /* Spacing between fields */
+}
+
+label {
+    display: block; /* Block display for labels */
+    font-weight: bold; /* Bold text */
+    margin-bottom: 5px; /* Space below label */
+}
+
+input[type="text"],
+input[type="number"] {
+    width: calc(100% - 20px); /* Full width minus padding */
+    padding: 10px; /* Padding for inputs */
+    margin-bottom: 10px; /* Space below input */
+    border: 1px solid #ccc; /* Border color */
+    border-radius: 4px; /* Rounded corners */
+    transition: border 0.3s; /* Smooth transition */
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    border-color: #007bff; /* Change border color on focus */
+}
+
+button {
+    width: 100%; /* Full width button */
+    padding: 10px; /* Button padding */
+    background-color: #28a745; /* Green background */
+    color: white; /* White text */
+    border: none; /* No border */
+    border-radius: 4px; /* Rounded corners */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor */
+    transition: background-color 0.3s; /* Smooth transition */
+}
+
+button:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+.portfolio {
+    margin-top: 20px; /* Space above portfolio */
+    padding: 10px; /* Padding for portfolio section */
+    background: #e9ecef; /* Light gray background */
+    border-radius: 4px; /* Rounded corners */
+}
+
+#portfolio-list {
+    list-style-type: none; /* Remove bullet points */
+    padding: 0; /* No padding */
+}
+
+#portfolio-list li {
+    background: #ffffff; /* White background for list items */
+    padding: 8px; /* Padding for list items */
+    margin: 5px 0; /* Margin between items */
+    border-radius: 4px; /* Rounded corners */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
