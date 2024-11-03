@@ -1,11 +1,12 @@
 
+let statusElement = document.getElementById('api-status');
         async function checkApiStatus() {
             try {
                 let response = await fetch('/api/status');
                 let data = await response.json();
                 
                 // Update the page with the API status
-                let statusElement = document.getElementById('api-status');
+                
                 if (data.status === 'connected') {
                     statusElement.textContent = 'API is connected';
                     statusElement.style.color = 'green';
