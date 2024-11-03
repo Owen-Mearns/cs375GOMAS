@@ -12,14 +12,42 @@ th, td {
 }
 
 .form {
-	padding: 1rem;
-	margin: 2rem 0;
-	border: 1px solid black;
-}
-.form label {
-	font-weight: bold;
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-#message {
-	margin: 1rem 0;
+.form h2 {
+    text-align: center;
+    margin-bottom: 1rem;
 }
+
+.form label {
+    font-weight: bold;
+}
+
+.form input {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.form button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.form button:hover {
+    background-color: #45a049;
+}
+
