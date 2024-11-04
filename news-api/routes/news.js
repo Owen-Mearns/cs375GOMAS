@@ -1,4 +1,4 @@
-// routes/news.js
+// news-api/routes/news.js
 const express = require('express');
 const { getNews } = require('../controllers/newsController'); // Import the news controller
 const router = express.Router();
