@@ -1,6 +1,6 @@
 
 const env = require("../../env.json");
-const apiKey = env.API_KEY;
+
 
 // Global variable to store portfolio, purchase history, and balance
 let portfolio = {};
@@ -86,8 +86,10 @@ document.getElementById('invest-button').addEventListener('click', async () => {
     }
 });
 
+
 // Function to fetch stock data from the API
 async function fetchStockData(symbol) {
+    const apiKey = env.API_KEY;
     const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`);
     const data = await response.json();
     return data;
