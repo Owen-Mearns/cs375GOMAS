@@ -15,7 +15,7 @@ ALSO create an env.json file in the root directory that has
 
 	"user": "postgres",
 	"host": "localhost",
-	"db_name": "auth",
+	"db_name": "auth", 
 	"password": "Luxray924!",
 	"API_KEY": "STOCK API KEY",
 	"NEWS_API_KEY": "NEWS API KEY",
