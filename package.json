@@ -5,6 +5,7 @@
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "function-bind": "^1.1.2",
+    "get-intrinsic": "^1.2.4",
     "pg": "^8.8.0"
   },
   "name": "cs375gomas",
