@@ -8,14 +8,31 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
+
 // Load environment variables from env.json
 const env = require("../env.json");
 const apiKey = env.API_KEY;
 const apiUrl = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=";
 const portfolio = [];
 
+const { Pool } = require("pg");
+
+// Initialize the pool with your database credentials
+const pool = new Pool({
+    user: env.user,         // Replace with your database username
+    host: env.host,         // Replace with your database host, usually 'localhost'
+    database: env.DB_NAME,     // Replace with your database name
+    password: env.password, // Replace with your database password
+    port: env.PORT          // Replace with your database port, usually 5432
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+const newsRoutes = require('./routes/news');
+
+app.use('/api/news', newsRoutes);
+
 app.use(express.urlencoded({ extended: true }));
 
 //Simple function to see if you have connected to the API or not.
