@@ -1,7 +1,12 @@
+
+const env = require("../../env.json");
+const apiKey = env.API_KEY;
+
 // Global variable to store portfolio, purchase history, and balance
 let portfolio = {};
 let purchaseHistory = [];
 let balance = 1000; // Starting balance
+
 
 // Function to add stock to the portfolio
 function addToPortfolio(symbol, amount, stockPrice) {
@@ -83,7 +88,6 @@ document.getElementById('invest-button').addEventListener('click', async () => {
 
 // Function to fetch stock data from the API
 async function fetchStockData(symbol) {
-    const apiKey = "OI7SQ4A96TB4RLLF"; // Your Alpha Vantage API key
     const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`);
     const data = await response.json();
     return data;

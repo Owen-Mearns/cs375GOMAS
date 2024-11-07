@@ -21,9 +21,9 @@ const { Pool } = require("pg");
 const pool = new Pool({
     user: env.user,         // Replace with your database username
     host: env.host,         // Replace with your database host, usually 'localhost'
-    database: env.DB_NAME,     // Replace with your database name
+    database: env.db_name,     // Replace with your database name
     password: env.password, // Replace with your database password
-    port: env.PORT          // Replace with your database port, usually 5432
+    port: env.post          // Replace with your database port, usually 5432
 });
 
 app.use(express.json());
