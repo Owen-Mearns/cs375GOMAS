@@ -1,42 +1,4 @@
-<!--
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Portfolio</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <header>
-        <div class="logo">
-            <img src="images/logo.png" alt="Stock News Logo">
-            <h1>Stock News</h1>
-        </div>
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Search stock or business news...">
-            <button id="search-button">Search</button>
-        </div>
-    </header>
-    <main>
-        <h1>Welcome to the Stock Portfolio</h1>
-        <p id="api-status">Checking API status...</p>
 
-        <div id="news-container"></div>
-    </main>
-    <footer>
-        <p>&copy; 2023 Stock News. All rights reserved.</p>
-    </footer>
-
-    <button id="signupButton">Sign Up</button>
-    <button id="loginButton">Log In</button>
-    <button id="investButton">Invest</button>
-
-<script src="index.js"></script>
-<script src="script.js"></script>
-</body>
-</html>
--->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -57,9 +19,26 @@
             <button id="search-button">Search</button>
             <button id="signupButton">Sign Up</button>
             <button id="loginButton">Log In</button>
-            <button id="investButton">Invest</button>
         </div>
     </header>
+    <div class="container">
+        <h1>Invest in Stocks</h1>
+        <h2>Available Balance: $<span id="balance">1000</span></h2> <!-- Display balance -->
+        <input type="text" id="stock-symbol" placeholder="Enter stock symbol" />
+        <input type="number" id="amount" placeholder="Enter amount" />
+        <button id="invest-button">Invest</button>
+
+        <h2>Your Portfolio</h2>
+        <ul id="portfolio-list"></ul>
+
+        <!-- Toggle Button for Purchase History -->
+        <button id="toggle-history-button">Show Purchase History</button>
+        <div id="purchase-history-container" style="display: none;">
+            <h2>Purchase History</h2>
+            <ul id="purchase-history"></ul>
+        </div>
+    </div>
+
     <main>
         <div id="news-container"></div>
         <p id="api-status">Checking API status...</p>
@@ -67,6 +46,7 @@
     <footer>
         <p>&copy; 2023 Stock News. All rights reserved.</p>
     </footer>
+    <script src="invest.js"></script>
     <script src="index.js"></script>
     <script src="script.js"></script>
 </body>

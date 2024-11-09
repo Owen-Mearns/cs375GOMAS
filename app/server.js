@@ -11,7 +11,7 @@ const port = 3000;
 
 // Load environment variables from env.json
 const env = require("../env.json");
-const apiKey = env.API_KEY;
+const apiKey = "FSOY6AHF5KW0FDA1";
 const apiUrl = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=";
 const portfolio = [];
 
