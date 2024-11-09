@@ -68,8 +68,9 @@ app.get('/api/stock/:symbol', async (req, res) => {
             }
         });
 
-        // Log the full response data to inspect its structure
-        console.log('Alpha Vantage response data:', response.data);
+        // Log the full response data
+        console.log('Alpha Vantage response data:', response.data);  // Log the whole response
+        console.log('Stock price:', response.data['Global Quote'] ? response.data['Global Quote']['05. price'] : 'Price not found');
 
         // Check if the expected data structure is present
         if (response.data['Global Quote'] && response.data['Global Quote']['05. price']) {
