@@ -10,16 +10,10 @@ async function fetchStockData(symbol) {
         const response = await fetch(`/api/stock/${symbol}`);
         const data = await response.json();
         
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        // Log the entire response to inspect the structure
-        console.log('Fetched stock data:', data);
 
         // Check if 'Global Quote' and '05. price' exist in the response
         if (data['Global Quote'] && data['Global Quote']['05. price']) {
-            return data['Global Quote']['05. price'];
+            return data;
         } else {
             throw new Error('Stock price not found');
         }
@@ -99,15 +93,16 @@ document.getElementById('invest-button').addEventListener('click', async () => {
     }
 
     try {
-        const stockPrice = await fetchStockData(symbol); // Fetch stock price
+        const stockData = await fetchStockData(symbol);
+        const stockPrice = stockData['Global Quote']['05. price'];
         if (stockPrice) {
-            addToPortfolio(symbol, amount, parseFloat(stockPrice)); // Add to portfolio
+            addToPortfolio(symbol, amount, parseFloat(stockPrice));
         } else {
-            alert('Could not fetch stock price. Please try again. 555');
+            alert('Could not fetch stock price. Please try again.');
         }
     } catch (error) {
         console.error('Error fetching stock data:', error);
-        alert('Could not fetch stock data. Please try again. 66');
+        alert('Could not fetch stock data. Please try again.');
     }
 });
 
