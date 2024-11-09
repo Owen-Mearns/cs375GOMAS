@@ -25,11 +25,12 @@ let statusElement = document.getElementById('api-status');
 
         document.getElementById("loginButton").addEventListener("click", function() {
             window.location.href = 'login.html';
+            console.log("Error fetching stock data:")
         });
-
+/*
         document.getElementById("investButton").addEventListener("click", function() {
             window.location.href = 'invest.html';
         });
-
+*/
         
         checkApiStatus();

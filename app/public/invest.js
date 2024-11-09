@@ -1,11 +1,22 @@
 // Global variable to store portfolio, purchase history, and balance
-let env = require("../../env.json");
-let apiKey = "FSOY6AHF5KW0FDA1";
-
 let portfolio = {};
 let purchaseHistory = [];
 let balance = 1000;// Starting balance
 
+
+
+
+
+// Function to fetch stock data from the API
+async function fetchStockData(symbol) {
+    try {
+        const response = await fetch(`/api/stock/${symbol}`);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching stock data:', error);
+    }
+}
 
 
 // Function to add stock to the portfolio
@@ -86,14 +97,6 @@ document.getElementById('invest-button').addEventListener('click', async () => {
     }
 });
 
-// Function to fetch stock data from the API
-async function fetchStockData(symbol) {
-    
-    //const apiKey = "OI7SQ4A96TB4RLLF"; // Your Alpha Vantage API key
-    const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`);
-    const data = await response.json();
-    return data;
-}
 
 // Toggle purchase history visibility
 document.getElementById('toggle-history-button').addEventListener('click', function() {
@@ -109,3 +112,4 @@ document.getElementById('toggle-history-button').addEventListener('click', funct
         this.innerText = 'Show Purchase History'; // Change button text
     }
 });
+

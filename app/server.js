@@ -1,6 +1,5 @@
 const http = require("http");
 const express = require('express');
-const pg = require("pg");
 const axios = require('axios');
 const bcrypt = require("bcrypt");
 const fs = require('fs');
@@ -11,11 +10,14 @@ const port = 3000;
 
 // Load environment variables from env.json
 const env = require("../env.json");
-const apiKey = "FSOY6AHF5KW0FDA1";
+let apiKey = env.API_KEY;
 const apiUrl = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=";
 const portfolio = [];
 
+//console.log("API Key:", apiKey);
+
 const { Pool } = require("pg");
+
 
 // Initialize the pool with your database credentials
 const pool = new Pool({
@@ -35,6 +37,8 @@ app.use('/api/news', newsRoutes);
 
 app.use(express.urlencoded({ extended: true }));
 
+
+
 //Simple function to see if you have connected to the API or not.
 app.get('/api/status', async (req, res) => {
     try {
@@ -52,6 +56,33 @@ app.get('/api/status', async (req, res) => {
 })
 let balance = 10000;  // Initial balance
 let stocks = [];      // Array to hold stock investments
+
+app.get('/api/stock/:symbol', async (req, res) => {
+    const symbol = req.params.symbol;
+    try {
+        const response = await axios.get('https://www.alphavantage.co/query', {
+            params: {
+                function: 'GLOBAL_QUOTE',
+                symbol: symbol,
+                apikey: apiKey
+            }
+        });
+
+        // Log the full response data to inspect its structure
+        console.log('Alpha Vantage response data:', response.data);
+
+        // Check if the expected data structure is present
+        if (response.data['Global Quote'] && response.data['Global Quote']['05. price']) {
+            res.json(response.data);
+        } else {
+            // Handle case where expected data is missing
+            res.status(404).json({ error: 'Stock data not found' });
+        }
+    } catch (error) {
+        console.error('Error fetching stock data:', error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Failed to fetch stock data' });
+    }
+});
 
 const server = http.createServer((req, res) => {
     if (req.method === "POST" && req.url === "/invest") {
@@ -115,7 +146,6 @@ const server = http.createServer((req, res) => {
         res.end("Not Found");
     }
 });
-
 
 
 app.post("/signup", async (req, res) => {

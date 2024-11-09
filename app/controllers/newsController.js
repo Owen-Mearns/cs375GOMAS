@@ -1,6 +1,5 @@
 // controllers/newsController.js
 const axios = require('axios');
-
 const env = require("../../env.json");
 const NEWS_API_KEY = env.NEWS_API_KEY;
 const NEWS_API_URL = 'https://newsapi.org/v2/everything';
