@@ -10,16 +10,14 @@ async function fetchStockData(symbol) {
         const response = await fetch(`/api/stock/${symbol}`);
         const data = await response.json();
         
-
-        // Check if 'Global Quote' and '05. price' exist in the response
-        if (data['Global Quote'] && data['Global Quote']['05. price']) {
+        if (data['Global Quote']) {
             return data;
         } else {
             throw new Error('Stock price not found');
         }
     } catch (error) {
         console.error('Error fetching stock data:', error.message);
-        throw error; // Rethrow the error to be handled by the caller
+        throw error;
     }
 }
 
