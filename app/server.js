@@ -37,7 +37,14 @@ app.use('/api/news', newsRoutes);
 
 app.use(express.urlencoded({ extended: true }));
 
+const session = require('express-session');
 
+app.use(session({
+    secret: env.session_secret, 
+    resave: false, 
+    saveUninitialized: false,
+    cookie: { secure: false } 
+}));
 
 //Simple function to see if you have connected to the API or not.
 app.get('/api/status', async (req, res) => {
@@ -121,6 +128,7 @@ app.post("/login", async (req, res) => {
           const isMatch = await bcrypt.compare(password, user.password);
           
           if (isMatch) {
+            req.session.user = { username: user.username };
             return res.status(200).json({ message: "Login successful" });
           } else {
             return res.status(401).json({ message: "Invalid credentials" });
@@ -131,6 +139,43 @@ app.post("/login", async (req, res) => {
   } catch (err) {
       res.status(500).json({ message: "Error logging in" });
   }
+});
+
+app.post("/change-password", async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Unauthorized: Please log in" });
+    }
+
+    const username = req.session.user.username;
+
+    if (!newPassword) {
+        return res.status(400).json({ message: "New password is required" });
+    }
+
+    try {
+        const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+
+        if (result.rows.length > 0) {
+            const user = result.rows[0];
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+            if (!isMatch) {
+                return res.status(401).json({ message: "Current password is incorrect" });
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            await pool.query("UPDATE users SET password = $1 WHERE username = $2", [hashedPassword, username]);
+
+            res.status(200).json({ message: "Password changed successfully" });
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
+    } catch (err) {
+        console.error("Error changing password:", err);
+        res.status(500).json({ message: "Error changing password" });
+    }
 });
 
 app.listen(port, () => {

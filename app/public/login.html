@@ -20,6 +20,7 @@
             <button type="submit">Login</button>
         </form>
         <div id="message"></div>
+        <button id="changePasswordButton">Change Password</button>
     </div>
 
     <script>
@@ -55,6 +56,10 @@
                 console.error("Error logging in:", error);
                 document.getElementById("message").textContent = "An error occurred. Please try again.";
             }
+        });
+
+        document.getElementById("changePasswordButton").addEventListener("click", () => {
+            window.location.href = "/changePassword.html";
         });
     </script>
 </body>
