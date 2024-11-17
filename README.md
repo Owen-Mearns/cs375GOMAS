@@ -19,7 +19,8 @@ ALSO create an env.json file in the root directory that has
 	"password": "Luxray924!",
 	"API_KEY": "STOCK API KEY",
 	"NEWS_API_KEY": "NEWS API KEY",
-	"port": 5432
+	"port": 5432,
+	"JWT_SECRET": "CANBEANYTHINGLESSTHAN50CHARS"
 
 you should than be able to go the the /app directory
 and run node.js
