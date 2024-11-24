@@ -5,7 +5,6 @@ async function checkApiStatus() {
         let response = await fetch('/api/status');
         let data = await response.json();
 
-        // Update the page with the API status
 
         if (data.status === 'connected') {
             statusElement.textContent = 'API is connected';
@@ -25,12 +24,7 @@ document.getElementById("signupButton").addEventListener("click", function () {
 
 document.getElementById("loginButton").addEventListener("click", function () {
     window.location.href = 'login.html';
-    console.log("Error fetching stock data:")
 });
-/*
-        document.getElementById("investButton").addEventListener("click", function() {
-            window.location.href = 'invest.html';
-        });
-*/
+
 
 checkApiStatus();
