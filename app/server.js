@@ -6,15 +6,16 @@ const fs = require("fs");
 const path = require("path");
 const app = express();
 const port = 3000;
-const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 app.use(cookieParser());
 
 // Load environment variables from env.json
 const env = require("../env.json");
 let apiKey = env.API_KEY;
-const apiUrl = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=";
+const apiUrl =
+  "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=";
 const portfolio = [];
 
 //console.log("API Key:", apiKey);
@@ -174,6 +175,124 @@ app.get("/api/stock/:symbol", authenticateToken, async (req, res) => {
 //     res.end("Not Found");
 //   }
 // });
+//
+//
+
+app.post("/api/invest", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  const { symbol, amount } = req.body;
+  if (!symbol || !amount || amount <= 0) {
+    return res.status(400).json({ error: "Invalid symbol or amount" });
+  }
+  try {
+    const response = await axios.get("https://www.alphavantage.co/query", {
+      params: {
+        function: "GLOBAL_QUOTE",
+        symbol: symbol,
+        apikey: apiKey,
+      },
+    });
+    let globalQuote = response.data["Global Quote"];
+    if (!globalQuote || !globalQuote["05. price"]) {
+      //simulate price because I am out of API calls. just generating a random price
+      globalQuote = {};
+      globalQuote["05. price"] = Math.random() * 200;
+    }
+    const stockPrice = parseFloat(globalQuote["05. price"]);
+    const totalCost = amount * stockPrice;
+    const userResult = await pool.query(
+      "SELECT balance FROM users WHERE id = $1",
+      [userId],
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    let userBalance = parseFloat(userResult.rows[0].balance);
+    if (userBalance < totalCost) {
+      return res
+        .status(400)
+        .json({ error: "Insufficient balance to invest in this stock" });
+    }
+    userBalance -= totalCost;
+    await pool.query("UPDATE users SET balance = $1 WHERE id = $2", [
+      userBalance,
+      userId,
+    ]);
+    const portfolioResult = await pool.query(
+      "SELECT * FROM portfolios WHERE user_id = $1 AND symbol = $2",
+      [userId, symbol],
+    );
+    if (portfolioResult.rows.length > 0) {
+      const existingAmount = parseInt(portfolioResult.rows[0].amount);
+      const existingAvgPrice = parseFloat(
+        portfolioResult.rows[0].average_price,
+      );
+      const newAmount = existingAmount + amount;
+      const newAvgPrice =
+        (existingAmount * existingAvgPrice + amount * stockPrice) / newAmount;
+      await pool.query(
+        "UPDATE portfolios SET amount = $1, average_price = $2 WHERE user_id = $3 AND symbol = $4",
+        [newAmount, newAvgPrice, userId, symbol],
+      );
+    } else {
+      await pool.query(
+        "INSERT INTO portfolios (user_id, symbol, amount, average_price) VALUES ($1, $2, $3, $4)",
+        [userId, symbol, amount, stockPrice],
+      );
+    }
+    await pool.query(
+      "INSERT INTO purchases (user_id, symbol, amount, price) VALUES ($1, $2, $3, $4)",
+      [userId, symbol, amount, stockPrice],
+    );
+    res.status(200).json({ message: "Investment successful" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Failed to process investment" });
+  }
+});
+
+app.get("/api/balance", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  try {
+    const result = await pool.query("SELECT balance FROM users WHERE id = $1", [
+      userId,
+    ]);
+    if (result.rows.length > 0) {
+      const balance = parseFloat(result.rows[0].balance);
+      res.status(200).json({ balance });
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch balance" });
+  }
+});
+
+app.get("/api/portfolio", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  try {
+    const result = await pool.query(
+      "SELECT symbol, amount, average_price FROM portfolios WHERE user_id = $1",
+      [userId],
+    );
+    res.status(200).json({ portfolio: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch portfolio" });
+  }
+});
+
+app.get("/api/purchase-history", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  try {
+    const result = await pool.query(
+      "SELECT symbol, amount, price, timestamp FROM purchases WHERE user_id = $1 ORDER BY timestamp DESC",
+      [userId],
+    );
+    res.status(200).json({ history: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch purchase history" });
+  }
+});
 
 app.post("/signup", async (req, res) => {
   const { username, password } = req.body;
@@ -217,11 +336,11 @@ app.post("/login", async (req, res) => {
         const token = jwt.sign(
           { userId: user.id, username: user.username },
           env.JWT_SECRET,
-          { expiresIn: '7d' }
+          { expiresIn: "7d" },
         );
-        res.cookie('token', token, {
+        res.cookie("token", token, {
           httpOnly: true,
-          maxAge: 1000 * 60 * 60 * 24 * 7
+          maxAge: 1000 * 60 * 60 * 24 * 7,
         });
         return res.status(200).json({ message: "Login successful" });
       } else {
@@ -236,90 +355,91 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/change-password", async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword } = req.body;
 
-    if (!req.session.user) {
-        return res.status(401).json({ message: "Unauthorized: Please log in" });
-    }
+  if (!req.session.user) {
+    return res.status(401).json({ message: "Unauthorized: Please log in" });
+  }
 
-    const username = req.session.user.username;
+  const username = req.session.user.username;
 
-    if (!newPassword) {
-        return res.status(400).json({ message: "New password is required" });
-    }
+  if (!newPassword) {
+    return res.status(400).json({ message: "New password is required" });
+  }
 
-    try {
-      const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-  
-      if (result.rows.length > 0) {
-        const user = result.rows[0];
-        const isMatch = await bcrypt.compare(password, user.password);
-  
-        if (isMatch) {
-          const token = jwt.sign(
-            { userId: user.id, username: user.username },
-            env.JWT_SECRET,
-            { expiresIn: '7d' }
-          );
-          res.cookie('token', token, {
-            httpOnly: true,
-            maxAge: 1000 * 60 * 60 * 24 * 7
-          });
-          return res.status(200).json({ message: "Login successful" });
-        } else {
-          return res.status(401).json({ message: "Invalid credentials" });
-        }
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
+      username,
+    ]);
+
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (isMatch) {
+        const token = jwt.sign(
+          { userId: user.id, username: user.username },
+          env.JWT_SECRET,
+          { expiresIn: "7d" },
+        );
+        res.cookie("token", token, {
+          httpOnly: true,
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+        });
+        return res.status(200).json({ message: "Login successful" });
       } else {
-        res.status(401).json({ message: "User not found" });
+        return res.status(401).json({ message: "Invalid credentials" });
       }
-    } catch (err) {
-      console.error("Error logging in:", err);
-      res.status(500).json({ message: "Error logging in" });
+    } else {
+      res.status(401).json({ message: "User not found" });
     }
-  });
-  
-
-app.post("/changepassword", authenticateToken, async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-  
-    if (!newPassword) {
-      return res.status(400).json({ message: "New password is required" });
-    }
-  
-    try {
-      const result = await pool.query("SELECT * FROM users WHERE username = $1", [
-        req.user.username,
-      ]);
-  
-      if (result.rows.length > 0) {
-        const user = result.rows[0];
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
-  
-        if (!isMatch) {
-          return res.status(401).json({ message: "Current password is incorrect" });
-        }
-          const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await pool.query("UPDATE users SET password = $1 WHERE username = $2", [
-          hashedPassword,
-          req.user.username,
-        ]);
-  
-        res.status(200).json({ message: "Password changed successfully" });
-      } else {
-        res.status(404).json({ message: "User not found" });
-      }
-    } catch (err) {
-      console.error("Error changing password:", err);
-      res.status(500).json({ message: "Error changing password" });
-    }
-  });
-  
-
-app.post('/logout', (req, res) => {
-  res.clearCookie('token');
-  res.status(200).json({ message: 'Logged out successfully' });
+  } catch (err) {
+    console.error("Error logging in:", err);
+    res.status(500).json({ message: "Error logging in" });
+  }
 });
 
+app.post("/changepassword", authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!newPassword) {
+    return res.status(400).json({ message: "New password is required" });
+  }
+
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
+      req.user.username,
+    ]);
+
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+      if (!isMatch) {
+        return res
+          .status(401)
+          .json({ message: "Current password is incorrect" });
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await pool.query("UPDATE users SET password = $1 WHERE username = $2", [
+        hashedPassword,
+        req.user.username,
+      ]);
+
+      res.status(200).json({ message: "Password changed successfully" });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (err) {
+    console.error("Error changing password:", err);
+    res.status(500).json({ message: "Error changing password" });
+  }
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logged out successfully" });
+});
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
