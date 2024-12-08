@@ -14,22 +14,14 @@
     <main>
         <div class="profile-container">
             <h2 id="username">Username</h2>
-            <p id="email">Email</p>
-            <button id="edit-button">Edit Profile</button>
+            <h3>Balance: <span id="balance">0.00</span></h3>
         </div>
-
-        <div id="edit-modal" class="modal" style="display: none;">
-            <form id="edit-form">
-                <h2>Edit Profile</h2>
-                <label for="username">Username:</label>
-                <input type="text" id="edit-username" name="username">
-
-                <label for="email">Email:</label>
-                <input type="email" id="edit-email" name="email">
-
-                <button type="submit">Save Changes</button>
-                <button type="button" id="cancel-edit">Cancel</button>
-            </form>
+        <div class="history-container">
+            <button id="toggle-history-button">Show Purchase History</button>
+            <div id="purchase-history-container" style="display: none;">
+                <h3>Purchase History</h3>
+                <ul id="purchase-history"></ul>
+            </div>
         </div>
     </main>
     <script src="profile.js"></script>

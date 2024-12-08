@@ -1,37 +1,71 @@
-// Simulated user data
-const userData = {
-    username: "johndoe",
-    email: "johndoe@example.com"
-};
+async function fetchProfile() {
+    try {
+        const response = await fetch('/api/profile');
 
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("username").textContent = userData.username;
-    document.getElementById("email").textContent = userData.email;
+        if (!response.ok) {
+            throw new Error('Failed to fetch profile data');
+        }
+
+        const data = await response.json();
+
+        const username = data.username;
+        const balance = parseFloat(data.balance).toFixed(2);
+
+        document.getElementById('username').textContent = username;
+        document.getElementById('balance').textContent = `$${balance}`;
+    } catch (error) {
+        alert('Could not load profile data.');
+    }
+}
+
+async function fetchPurchaseHistory() {
+    try {
+        const response = await fetch('/api/purchase-history');
+
+        if (!response.ok) throw new Error('Failed to fetch purchase history');
+
+        const data = await response.json();
+
+        const historyList = document.getElementById('purchase-history');
+        historyList.innerHTML = ''; 
+
+        data.history.forEach((entry) => {
+
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <strong>${entry.symbol}</strong>: ${entry.amount} shares purchased at $${parseFloat(entry.price).toFixed(2)}
+                on ${new Date(entry.timestamp).toLocaleString()}
+            `;
+            historyList.appendChild(li);
+        });
+
+    } catch (error) {
+        console.error("Error fetching purchase history:", error);
+    }
+}
+
+
+
+document.getElementById('toggle-history-button').addEventListener('click', () => {
+    const container = document.getElementById('purchase-history-container');
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        fetchPurchaseHistory();
+        document.getElementById('toggle-history-button').textContent = 'Hide Purchase History';
+    } else {
+        container.style.display = 'none';
+        document.getElementById('toggle-history-button').textContent = 'Show Purchase History';
+    }
 });
 
-document.getElementById("edit-button").addEventListener("click", () => {
-    document.getElementById("edit-modal").style.display = "block";
-
-    // Pre-fill form with existing data
-    document.getElementById("edit-username").value = userData.username;
-    document.getElementById("edit-email").value = userData.email;
+document.addEventListener('DOMContentLoaded', () => {
+    fetchProfile();
+    fetchPortfolio();
+    fetchPurchaseHistory();
 });
 
-document.getElementById("cancel-edit").addEventListener("click", () => {
-    document.getElementById("edit-modal").style.display = "none";
-});
-
-document.getElementById("edit-form").addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const updatedUsername = document.getElementById("edit-username").value;
-    const updatedEmail = document.getElementById("edit-email").value;
-
-    userData.username = updatedUsername;
-    userData.email = updatedEmail;
-
-    document.getElementById("username").textContent = userData.username;
-    document.getElementById("email").textContent = userData.email;
-
-    document.getElementById("edit-modal").style.display = "none";
+document.getElementById('logout-button').addEventListener('click', () => {
+    fetch('/logout', { method: 'POST' })
+        .then(() => window.location.href = '/login.html')
+        .catch((error) => console.error('Error logging out:', error));
 });

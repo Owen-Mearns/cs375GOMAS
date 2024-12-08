@@ -35,82 +35,53 @@ header button:hover {
     color: white;
 }
 
-/* Profile Container */
 .profile-container {
-    max-width: 400px;
-    margin: 50px auto;
-    background: white;
-    padding: 20px;
+    max-width: 600px;
+    margin: 30px auto;
     text-align: center;
+    padding: 20px;
+    background: white;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.profile-container h2 {
+.profile-container h2, .profile-container h3 {
     margin: 10px 0;
 }
 
-.profile-container p {
-    margin: 5px 0;
-    color: #555;
-}
-
-.profile-container button {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.profile-container button:hover {
-    background-color: #0056b3;
-}
-
-/* Modal Styles */
-.modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
+.history-container {
+    max-width: 600px;
+    margin: 30px auto;
     padding: 20px;
+    background: white;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    width: 300px;
-}
-
-.modal h2 {
-    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
-.modal label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+.history-container ul {
+    list-style-type: none;
+    padding: 0;
 }
 
-.modal input {
-    width: calc(100% - 20px);
+.history-container li {
+    margin: 5px 0;
     padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
+    background: #f8f9fa;
     border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.modal button {
-    width: 100%;
-    padding: 10px;
-    background-color: #28a745;
+.history-container button {
+    margin-bottom: 10px;
+    background-color: #007bff;
     color: white;
     border: none;
+    padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
 }
 
-.modal button:hover {
-    background-color: #218838;
+.history-container button:hover {
+    background-color: #0056b3;
 }
