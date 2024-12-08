@@ -212,6 +212,154 @@ app.get("/api/portfolio", authenticateToken, async (req, res) => {
   }
 });
 
+// Handle stock transactions (both buy and sell)
+app.post("/api/transaction", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  const { symbol, amount, type } = req.body;  // type will be either 'buy' or 'sell'
+  
+  if (!symbol || !amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid symbol or amount" });
+  }
+
+  try {
+      // Fetch current stock price
+      const response = await axios.get("https://www.alphavantage.co/query", {
+          params: {
+              function: "GLOBAL_QUOTE",
+              symbol: symbol,
+              apikey: apiKey,
+          },
+      });
+
+      let globalQuote = response.data["Global Quote"];
+      if (!globalQuote || !globalQuote["05. price"]) {
+          //simulate price because of API call limits
+          globalQuote = {};
+          globalQuote["05. price"] = Math.random() * 200;
+      }
+
+      const stockPrice = parseFloat(globalQuote["05. price"]);
+      const totalAmount = amount * stockPrice;
+
+      // Get user's current balance
+      const userResult = await pool.query(
+          "SELECT balance FROM users WHERE id = $1",
+          [userId]
+      );
+
+      if (userResult.rows.length === 0) {
+          return res.status(404).json({ error: "User not found" });
+      }
+
+      let userBalance = parseFloat(userResult.rows[0].balance);
+
+      if (type === 'buy') {
+          // Check if user has enough balance
+          if (userBalance < totalAmount) {
+              return res.status(400).json({ error: "Insufficient balance" });
+          }
+
+          userBalance -= totalAmount;
+
+          // Update portfolio
+          const portfolioResult = await pool.query(
+              "SELECT * FROM portfolios WHERE user_id = $1 AND symbol = $2",
+              [userId, symbol]
+          );
+
+          if (portfolioResult.rows.length > 0) {
+              const existingAmount = parseInt(portfolioResult.rows[0].amount);
+              const existingAvgPrice = parseFloat(portfolioResult.rows[0].average_price);
+              const newAmount = existingAmount + amount;
+              const newAvgPrice = (existingAmount * existingAvgPrice + amount * stockPrice) / newAmount;
+
+              await pool.query(
+                  "UPDATE portfolios SET amount = $1, average_price = $2 WHERE user_id = $3 AND symbol = $4",
+                  [newAmount, newAvgPrice, userId, symbol]
+              );
+          } else {
+              await pool.query(
+                  "INSERT INTO portfolios (user_id, symbol, amount, average_price) VALUES ($1, $2, $3, $4)",
+                  [userId, symbol, amount, stockPrice]
+              );
+          }
+
+          // Record purchase
+          await pool.query(
+              "INSERT INTO purchases (user_id, symbol, amount, price) VALUES ($1, $2, $3, $4)",
+              [userId, symbol, amount, stockPrice]
+          );
+
+      } else if (type === 'sell') {
+          // Check if user has enough stocks to sell
+          const portfolioResult = await pool.query(
+              "SELECT * FROM portfolios WHERE user_id = $1 AND symbol = $2",
+              [userId, symbol]
+          );
+
+          if (portfolioResult.rows.length === 0 || portfolioResult.rows[0].amount < amount) {
+              return res.status(400).json({ error: "Insufficient stocks to sell" });
+          }
+
+          const existingAmount = parseInt(portfolioResult.rows[0].amount);
+          const newAmount = existingAmount - amount;
+          userBalance += totalAmount;
+
+          if (newAmount === 0) {
+              await pool.query(
+                  "DELETE FROM portfolios WHERE user_id = $1 AND symbol = $2",
+                  [userId, symbol]
+              );
+          } else {
+              await pool.query(
+                  "UPDATE portfolios SET amount = $1 WHERE user_id = $2 AND symbol = $3",
+                  [newAmount, userId, symbol]
+              );
+          }
+
+          // Record sell as a negative purchase
+          await pool.query(
+              "INSERT INTO purchases (user_id, symbol, amount, price) VALUES ($1, $2, $3, $4)",
+              [userId, symbol, -amount, stockPrice]
+          );
+      }
+
+      // Update user balance
+      await pool.query(
+          "UPDATE users SET balance = $1 WHERE id = $2",
+          [userBalance, userId]
+      );
+
+      res.status(200).json({ message: `${type.toUpperCase()} transaction successful` });
+
+  } catch (error) {
+      console.error("Transaction error:", error);
+      res.status(500).json({ error: "Failed to process transaction" });
+  }
+});
+
+// Modify your existing purchase history endpoint to handle both buys and sells
+app.get("/api/transaction-history", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  try {
+      const result = await pool.query(
+          "SELECT symbol, amount, price, timestamp FROM purchases WHERE user_id = $1 ORDER BY timestamp DESC",
+          [userId]
+      );
+      
+      // Transform the data to include transaction type
+      const history = result.rows.map(row => ({
+          ...row,
+          type: row.amount > 0 ? 'BUY' : 'SELL',
+          amount: Math.abs(row.amount)  // Convert negative amounts back to positive for display
+      }));
+      
+      res.status(200).json({ history });
+  } catch (error) {
+      res.status(500).json({ error: "Failed to fetch transaction history" });
+  }
+});
+
 app.get("/api/purchase-history", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   try {
