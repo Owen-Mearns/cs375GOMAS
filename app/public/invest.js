@@ -1,135 +1,240 @@
-// Global variables for balance, portfolio, purchase history
-let balance = 1000;
-let portfolio = {};
-let purchaseHistory = [];
-// Load API key from env.json
-const env = JSON.parse(fs.readFileSync('env.json', 'utf-8'));
-const ALPHA_VANTAGE_API_KEY = "OI7SQ4A96TB4RLLF";
-//const ALPHA_VANTAGE_API_KEY = env.apiKey;
+document.addEventListener('DOMContentLoaded', function() {
+  // Global variable to store portfolio, purchase history, and balance
+  let portfolio = {};
+  let purchaseHistory = [];
+  let balance = 1000; // Starting balance
+  let priceAlerts = {};
 
-// Function to fetch stock data
-async function fetchStockData(symbol) {
-    const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`);
-    if (!response.ok) throw new Error("Failed to fetch stock data");
-    return await response.json();
-}
+  // Function to fetch stock data from the API
+  async function fetchStockData(symbol) {
+      try {
+          const response = await fetch(`/api/stock/${symbol}`);
+          const data = await response.json();
 
-// Function to add stocks to the portfolio
-function addToPortfolio(symbol, amount, stockPrice) {
-    const totalCost = amount * stockPrice;
+          if (data["Global Quote"]) {
+              checkPriceAlerts(symbol, parseFloat(data["Global Quote"]["05. price"]));
+              return data;
+          } else {
+              throw new Error("Stock price not found");
+          }
+      } catch (error) {
+          console.error("Error fetching stock data:", error.message);
+          throw error;
+      }
+  }
 
-    if (balance < totalCost) {
-        alert("Insufficient balance to invest.");
-        return;
-    }
+  // Function to check and trigger price alerts
+  function checkPriceAlerts(symbol, currentPrice) {
+      if (priceAlerts[symbol]) {
+          const alerts = priceAlerts[symbol];
+          
+          if (alerts.upper && currentPrice >= alerts.upper) {
+              alert(`${symbol} has reached or exceeded your upper price alert of $${alerts.upper}`);
+              delete priceAlerts[symbol].upper;
+          }
+          
+          if (alerts.lower && currentPrice <= alerts.lower) {
+              alert(`${symbol} has reached or fallen below your lower price alert of $${alerts.lower}`);
+              delete priceAlerts[symbol].lower;
+          }
+          
+          if (!alerts.upper && !alerts.lower) {
+              delete priceAlerts[symbol];
+          }
+      }
+  }
 
-    balance -= totalCost;
-    portfolio[symbol] = portfolio[symbol] || { amount: 0, averagePrice: 0 };
-    const prevAmount = portfolio[symbol].amount;
-    portfolio[symbol].amount += amount;
-    portfolio[symbol].averagePrice = 
-        ((prevAmount * portfolio[symbol].averagePrice) + totalCost) / portfolio[symbol].amount;
+  // Function to set price alerts
+  function setPriceAlert(symbol, upperLimit = null, lowerLimit = null) {
+      if (!upperLimit && !lowerLimit) {
+          alert("Please specify at least one price alert limit");
+          return;
+      }
 
-    purchaseHistory.push({ symbol, amount, price: stockPrice, type: "Buy", time: new Date().toLocaleString() });
-    updateUI();
-}
+      priceAlerts[symbol] = {
+          ...(upperLimit && { upper: upperLimit }),
+          ...(lowerLimit && { lower: lowerLimit })
+      };
 
-// Function to sell stocks
-function sellFromPortfolio(symbol, amount, stockPrice) {
-    if (!portfolio[symbol] || portfolio[symbol].amount < amount) {
-        alert("Not enough shares to sell.");
-        return;
-    }
+      alert(`Price alerts set for ${symbol}`);
+  }
 
-    const totalGain = amount * stockPrice;
-    portfolio[symbol].amount -= amount;
-    balance += totalGain;
+  // Function to handle stock transactions (buy/sell)
+  async function handleTransaction(symbol, amount, transactionType) {
+      try {
+          const response = await fetch("/api/transaction", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ 
+                  symbol, 
+                  amount, 
+                  type: transactionType 
+              }),
+          });
+          
+          if (response.ok) {
+              alert(`${transactionType.toUpperCase()} transaction successful!`);
+              await Promise.all([
+                  fetchBalance(),
+                  fetchPortfolio(),
+                  fetchTransactionHistory()
+              ]);
+          } else {
+              const errorData = await response.json();
+              alert(`Error: ${errorData.error}`);
+          }
+      } catch (error) {
+          console.error(`Error during ${transactionType}:`, error);
+          alert(`Could not complete ${transactionType}. Please try again.`);
+      }
+  }
 
-    if (portfolio[symbol].amount === 0) delete portfolio[symbol];
+  // Event listeners
+  const buyButton = document.getElementById("buy-button");
+  if (buyButton) {
+      buyButton.addEventListener("click", async () => {
+          await handleTransaction(
+              document.getElementById("stock-symbol").value.trim().toUpperCase(),
+              parseInt(document.getElementById("amount").value.trim()),
+              "buy"
+          );
+      });
+  }
 
-    purchaseHistory.push({ symbol, amount, price: stockPrice, type: "Sell", time: new Date().toLocaleString() });
-    updateUI();
-}
+  const sellButton = document.getElementById("sell-button");
+  if (sellButton) {
+      sellButton.addEventListener("click", async () => {
+          await handleTransaction(
+              document.getElementById("stock-symbol").value.trim().toUpperCase(),
+              parseInt(document.getElementById("amount").value.trim()),
+              "sell"
+          );
+      });
+  }
 
-// Function to update the UI
-function updateUI() {
-    document.getElementById("balance").innerText = balance.toFixed(2);
+  const setAlertButton = document.getElementById("set-alert-button");
+  if (setAlertButton) {
+      setAlertButton.addEventListener("click", () => {
+          const symbol = document.getElementById("alert-symbol").value.trim().toUpperCase();
+          const upperLimit = parseFloat(document.getElementById("upper-limit").value);
+          const lowerLimit = parseFloat(document.getElementById("lower-limit").value);
+          
+          setPriceAlert(symbol, 
+              !isNaN(upperLimit) ? upperLimit : null,
+              !isNaN(lowerLimit) ? lowerLimit : null
+          );
+      });
+  }
 
-    const portfolioList = document.getElementById("portfolio-list");
-    portfolioList.innerHTML = "";
-    for (const [symbol, data] of Object.entries(portfolio)) {
-        const li = document.createElement("li");
-        li.innerText = `${symbol}: ${data.amount} shares at $${data.averagePrice.toFixed(2)} each`;
-        portfolioList.appendChild(li);
-    }
-}
+  async function fetchBalance() {
+      try {
+          const response = await fetch("/api/balance", {
+              method: "GET",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+          });
+          if (response.ok) {
+              const data = await response.json();
+              const balanceElement = document.getElementById("balance");
+              if (balanceElement) {
+                  balanceElement.innerText = data.balance.toFixed(2);
+              }
+          } else {
+              console.error("Failed to fetch balance");
+          }
+      } catch (error) {
+          console.error("Error fetching balance:", error);
+      }
+  }
 
-// Function to check for price fluctuations
-async function monitorStockPrices() {
-    for (const symbol of Object.keys(portfolio)) {
-        try {
-            const data = await fetchStockData(symbol);
-            const currentPrice = parseFloat(data["Global Quote"]["05. price"]);
-            const averagePrice = portfolio[symbol].averagePrice;
-            const changePercent = ((currentPrice - averagePrice) / averagePrice) * 100;
+  async function fetchPortfolio() {
+      try {
+          const response = await fetch("/api/portfolio", {
+              method: "GET",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+          });
+          if (response.ok) {
+              const data = await response.json();
+              const portfolioList = document.getElementById("portfolio-list");
+              if (portfolioList) {
+                  portfolioList.innerHTML = "";
+                  data.portfolio.forEach((item) => {
+                      const li = document.createElement("li");
+                      li.innerText = `${item.symbol}: ${item.amount} shares at $${parseFloat(item.average_price).toFixed(2)} each`;
+                      portfolioList.appendChild(li);
+                  });
+              }
+          } else {
+              console.error("Failed to fetch portfolio");
+          }
+      } catch (error) {
+          console.error("Error fetching portfolio:", error);
+      }
+  }
 
-            if (Math.abs(changePercent) >= 5) {
-                alert(`Alert: ${symbol} price changed by ${changePercent.toFixed(2)}%! Current Price: $${currentPrice}`);
-            }
-        } catch (error) {
-            console.error(`Error monitoring ${symbol}:`, error);
-        }
-    }
-}
+  async function fetchTransactionHistory() {
+      try {
+          const response = await fetch("/api/transaction-history", {
+              method: "GET",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+          });
+          if (response.ok) {
+              const data = await response.json();
+              const historyList = document.getElementById("transaction-history");
+              if (historyList) {
+                  historyList.innerHTML = "";
+                  data.history.forEach((entry) => {
+                      const li = document.createElement("li");
+                      li.innerText = `${entry.type ? entry.type.toUpperCase() : 'BUY'}: ${entry.symbol} - ${entry.amount} shares at $${parseFloat(entry.price).toFixed(2)} on ${new Date(entry.timestamp).toLocaleString()}`;
+                      historyList.appendChild(li);
+                  });
+              }
+          } else {
+              console.error("Failed to fetch transaction history");
+          }
+      } catch (error) {
+          console.error("Error fetching transaction history:", error);
+      }
+  }
 
-// Set up event listeners
-document.getElementById("invest-button").addEventListener("click", async () => {
-    const symbol = document.getElementById("stock-symbol").value.trim().toUpperCase();
-    const amount = parseInt(document.getElementById("amount").value.trim());
-    if (!symbol || isNaN(amount) || amount <= 0) {
-        alert("Invalid input.");
-        return;
-    }
+  // Toggle history button event listener
+  const toggleHistoryButton = document.getElementById("toggle-history-button");
+  if (toggleHistoryButton) {
+      toggleHistoryButton.addEventListener("click", function() {
+          const historyContainer = document.getElementById("transaction-history-container");
+          if (historyContainer) {
+              if (historyContainer.style.display === "none") {
+                  historyContainer.style.display = "block";
+                  fetchTransactionHistory();
+                  this.innerText = "Hide Transaction History";
+              } else {
+                  historyContainer.style.display = "none";
+                  this.innerText = "Show Transaction History";
+              }
+          }
+      });
+  }
 
-    try {
-        const data = await fetchStockData(symbol);
-        const stockPrice = parseFloat(data["Global Quote"]["05. price"]);
-        addToPortfolio(symbol, amount, stockPrice);
-    } catch (error) {
-        alert("Error fetching stock data.");
-    }
+  // Start periodic price checks for alerting
+  setInterval(async () => {
+      for (const symbol of Object.keys(priceAlerts)) {
+          try {
+              await fetchStockData(symbol);
+          } catch (error) {
+              console.error(`Error checking price for ${symbol}:`, error);
+          }
+      }
+  }, 60000); // Check every minute
+
+  // Initial data fetch
+  fetchBalance();
+  fetchPortfolio();
+  fetchTransactionHistory();
 });
-
-document.getElementById("sell-button").addEventListener("click", async () => {
-    const symbol = document.getElementById("stock-symbol").value.trim().toUpperCase();
-    const amount = parseInt(document.getElementById("amount").value.trim());
-    if (!symbol || isNaN(amount) || amount <= 0) {
-        alert("Invalid input.");
-        return;
-    }
-
-    try {
-        const data = await fetchStockData(symbol);
-        const stockPrice = parseFloat(data["Global Quote"]["05. price"]);
-        sellFromPortfolio(symbol, amount, stockPrice);
-    } catch (error) {
-        alert("Error fetching stock data.");
-    }
-});
-
-// Toggle purchase history
-document.getElementById("toggle-history-button").addEventListener("click", () => {
-    const historyContainer = document.getElementById("purchase-history-container");
-    historyContainer.style.display = historyContainer.style.display === "none" ? "block" : "none";
-
-    const historyList = document.getElementById("purchase-history");
-    historyList.innerHTML = "";
-    purchaseHistory.forEach(({ symbol, amount, price, type, time }) => {
-        const li = document.createElement("li");
-        li.innerText = `${type} - ${symbol}: ${amount} shares at $${price} on ${time}`;
-        historyList.appendChild(li);
-    });
-});
-
-// Start monitoring price changes
-setInterval(monitorStockPrices, 60000); // Every 60 seconds
