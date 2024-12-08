@@ -1,7 +1,7 @@
 // controllers/newsController.js
 const axios = require('axios');
-
-const NEWS_API_KEY = '526facf96c474d178441767ca6093a8c';
+const env = require("../../env.json");
+const NEWS_API_KEY = env.NEWS_API_KEY;
 const NEWS_API_URL = 'https://newsapi.org/v2/everything';
 
 const getNews = async (req, res) => {
@@ -17,10 +17,12 @@ const getNews = async (req, res) => {
             }
         });
 
-        res.json(response.data.articles); // Send articles as JSON response
+        // Limit the number of articles to 10
+        res.json(response.data.articles.slice(0, 10)); // Send only the first 10 articles as JSON response
     } catch (error) {
         res.status(500).json({ message: 'Error fetching news', error });
     }
 };
 
 module.exports = { getNews };
+
