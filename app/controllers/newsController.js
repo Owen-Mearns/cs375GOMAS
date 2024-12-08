@@ -17,7 +17,7 @@ const getNews = async (req, res) => {
             }
         });
 
-        res.json(response.data.articles); // Send articles as JSON response
+        res.json(response.data.articles.slice(0, 10));
     } catch (error) {
         res.status(500).json({ message: 'Error fetching news', error });
     }
