@@ -10,18 +10,18 @@
         <header>
             <div class="logo">
                 <img src="images/logo.png" alt="Stock News Logo" />
-                <h1>Stock News</h1>
+                <h1 style="color: aliceblue; font-size: larger;">Stock News</h1>
             </div>
-            <div class="search-container">
-                <input
-                    type="text"
-                    id="search-input"
-                    placeholder="Search stock or business news..."
-                />
-                <button id="search-button">Search</button>
-                <button id="signupButton">Sign Up</button>
+            
+            <div class="button-container">
+                <button id="logoutButton", class="logoutButton">Logout</button>
                 <button id="loginButton">Log In</button>
             </div>
+
+            <div class="button-container">
+            <button id="signupButton", class="sign-upbutton">Sign Up</button>
+        </div>
+
         </header>
        
 
@@ -30,6 +30,15 @@
              <div style="width: 100%; overflow: hidden;">
 
             <div class="container", style="width: 1000px; float: left;">
+
+                <div class="search-container" style="width: 300px;">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Search stock or business news..."
+                    />
+                    <button id="search-button">Search</button>
+                </div>
                 <h1>Invest in Stocks</h1>
                 <h2>Available Balance: $<span id="balance">1000</span></h2>
                 <!-- Display balance -->
