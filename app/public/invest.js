@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
               console.error(`Error checking price for ${symbol}:`, error);
           }
       }
-  }, 60000); // Check every minute
+  }, 600000); // Check every minute
 
   // Initial data fetch
   fetchBalance();
